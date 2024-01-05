@@ -3,6 +3,7 @@ using PlayFab.ClientModels;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEditor.PackageManager.Requests;
 
 public class PlayfabManager : MonoBehaviour
 {
@@ -12,11 +13,19 @@ public class PlayfabManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI loginRegisterText;
     [SerializeField] private Toggle showPasswordToggle;
     [SerializeField] private GameObject LoginRegisterUI;
+    [SerializeField] private GameObject addCurrencyButton;
+    [SerializeField] private TextMeshProUGUI displayNameText;
+    [SerializeField] private TextMeshProUGUI currencyText;
+    [SerializeField] private int Currency;
+    [SerializeField] private bool loggedIn;
     //Here we check if our Playfab title id is the same as the one of our project
     public void Start()
     {
         loginRegisterText.gameObject.SetActive(false);
         LoginRegisterUI.SetActive(true);
+        addCurrencyButton.gameObject.SetActive(false);
+        displayNameText.gameObject.SetActive(false);
+        currencyText.gameObject.SetActive(false);
         passwordInputField.contentType = TMP_InputField.ContentType.Password;
         if (string.IsNullOrEmpty(PlayFabSettings.staticSettings.TitleId))
         {
@@ -77,6 +86,10 @@ public class PlayfabManager : MonoBehaviour
     {
         loginRegisterText.gameObject.SetActive(true);
         LoginRegisterUI.SetActive(false);
+        addCurrencyButton.gameObject.SetActive(true);
+        displayNameText.gameObject.SetActive(true);
+        currencyText.gameObject.SetActive(true);
+        displayNameText.text = usernameInputField.text;
         loginRegisterText.text = "Registered New User " + usernameInputField.text;
         Debug.Log("Registered new user");
     }
@@ -87,6 +100,10 @@ private void OnLoginSuccess(LoginResult result)
 
         loginRegisterText.gameObject.SetActive(true);
         LoginRegisterUI.SetActive(false);
+        addCurrencyButton.gameObject.SetActive(true);
+        displayNameText.gameObject.SetActive(true);
+        currencyText.gameObject.SetActive(true);
+        displayNameText.text = usernameInputField.text;
         loginRegisterText.text = "User Logged in" + usernameInputField.text;
         Debug.Log("User Logged in");
     }
@@ -109,4 +126,33 @@ private void OnLoginSuccess(LoginResult result)
         Debug.LogError(error.GenerateErrorReport());
     }
     #endregion PlayFab
+    #region PlayFab Currency
+    public void AddCurrency(int currency)
+    {
+        var request = new AddUserVirtualCurrencyRequest
+        {
+            VirtualCurrency = "CU",
+            Amount = currency,
+
+        };
+        PlayFabClientAPI.AddUserVirtualCurrency(request, OnAddCurrencySuccess, OnAddCurrencyFailure);
+    }
+    private void OnAddCurrencySuccess(ModifyUserVirtualCurrencyResult result)
+    {
+        Currency = result.Balance;
+        currencyText.text = "Currency: " + Currency.ToString();
+        Debug.Log("Added Currency");
+    }
+    
+    private void OnAddCurrencyFailure(PlayFabError error)
+    {
+        Debug.LogError("Failed to add currency." + error.ErrorMessage);
+    }
+
+
+    #endregion PlayFab Currency
+
+    #region PlayFab Inventory
+
+    #endregion PLayFab Inventory
 }
